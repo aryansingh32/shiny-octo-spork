@@ -2,14 +2,15 @@
   "buildCommand": "chmod +x vercel-build.sh && ./vercel-build.sh",
   "installCommand": "echo 'Skipping default install'",
   "outputDirectory": "dist",
-  "framework": "vite",
+  "framework": null,
   "routes": [
     { "handle": "filesystem" },
     { "src": "/api/(.*)", "dest": "https://elderlycare.onrender.com/api/$1" },
-    { "src": "/(.*)", "dest": "index.html" }
+    { "src": "/(.*)", "dest": "/index.html" }
   ],
   "env": {
     "VITE_API_BASE_URL": "https://elderlycare.onrender.com",
-    "VERCEL_SKIP_DEFAULT_INSTALL": "1"
+    "VERCEL_SKIP_DEFAULT_INSTALL": "1",
+    "VERCEL_FORCE_NO_BUILD_CACHE": "1"
   }
 } 
