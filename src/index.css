@@ -1,0 +1,158 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Teal-based color scheme with warm accents - more senior-friendly */
+    --background: 180 20% 99%;
+    --foreground: 200 15% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 200 15% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 200 15% 20%;
+
+    --primary: 174 80% 33%;
+    --primary-foreground: 180 5% 98%;
+
+    --secondary: 180 17% 95%;
+    --secondary-foreground: 174 80% 33%;
+
+    --muted: 180 10% 94%;
+    --muted-foreground: 180 5% 45%;
+
+    --accent: 25 95% 90%;
+    --accent-foreground: 25 95% 35%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 38 100% 97%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 138 100% 97%;
+
+    --border: 200 15% 86%;
+    --input: 200 15% 86%;
+    --ring: 174 80% 33%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 174 80% 33%;
+    --sidebar-foreground: 180 5% 98%;
+    --sidebar-primary: 180 5% 98%;
+    --sidebar-primary-foreground: 174 80% 33%;
+    --sidebar-accent: 174 60% 40%;
+    --sidebar-accent-foreground: 180 5% 98%;
+    --sidebar-border: 174 50% 45%;
+    --sidebar-ring: 174 80% 63%;
+  }
+
+  .dark {
+    --background: 200 50% 13%;
+    --foreground: 180 5% 96%;
+
+    --card: 200 50% 13%;
+    --card-foreground: 180 5% 96%;
+
+    --popover: 200 50% 13%;
+    --popover-foreground: 180 5% 96%;
+
+    --primary: 174 80% 36%;
+    --primary-foreground: 180 5% 98%;
+
+    --secondary: 200 25% 23%;
+    --secondary-foreground: 174 80% 75%;
+
+    --muted: 200 25% 23%;
+    --muted-foreground: 180 5% 70%;
+
+    --accent: 25 95% 24%;
+    --accent-foreground: 25 95% 90%;
+
+    --destructive: 0 62.8% 50.6%;
+    --destructive-foreground: 0 0% 98%;
+
+    --warning: 38 92% 60%;
+    --warning-foreground: 38 100% 10%;
+
+    --success: 142 76% 36%;
+    --success-foreground: 138 100% 97%;
+
+    --border: 200 25% 23%;
+    --input: 200 25% 23%;
+    --ring: 174 80% 63%;
+
+    --sidebar-background: 200 50% 13%;
+    --sidebar-foreground: 180 5% 96%;
+    --sidebar-primary: 174 80% 36%;
+    --sidebar-primary-foreground: 180 5% 98%;
+    --sidebar-accent: 174 60% 40%;
+    --sidebar-accent-foreground: 180 5% 96%;
+    --sidebar-border: 174 50% 45%;
+    --sidebar-ring: 174 80% 63%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  /* High contrast focus outline for accessibility */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Larger font sizes for better readability */
+  h1 {
+    @apply text-3xl font-semibold;
+  }
+
+  h2 {
+    @apply text-2xl font-semibold;
+  }
+
+  h3 {
+    @apply text-xl font-semibold;
+  }
+
+  p, li, a, button, input, select, textarea {
+    @apply text-lg;
+  }
+
+  /* Make buttons and interactive elements bigger and easier to tap */
+  button, .btn, [role="button"], a.button {
+    @apply min-h-12 min-w-[3rem] px-6 py-3;
+  }
+
+  /* Custom classes for accessibility features */
+  .high-contrast {
+    --border: 0 0% 0%;
+    --foreground: 0 0% 0%;
+    --background: 0 0% 100%;
+    --primary: 0 0% 0%;
+    --primary-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+  }
+
+  .larger-text {
+    font-size: 120%;
+  }
+
+  .extra-large-text {
+    font-size: 150%;
+  }
+}

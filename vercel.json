@@ -1,0 +1,14 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "https://elderlycareui-backend.onrender.com/api/$1" },
+    { "src": "/(.*)", "dest": "index.html" }
+  ],
+  "env": {
+    "VITE_API_BASE_URL": "https://elderlycareui-backend.onrender.com"
+  }
+} 
