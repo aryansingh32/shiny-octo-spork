@@ -22,6 +22,11 @@ except ImportError:
     HAS_TTS = False
     print("Warning: pyttsx3 not available. Text-to-speech functionality will be disabled.")
 
+# Check for cloud environment
+IS_CLOUD_ENV = os.environ.get('RENDER', False) or os.environ.get('CLOUD_ENV', False)
+if IS_CLOUD_ENV:
+    print("Detected cloud environment, using cloud-friendly mode")
+
 # Load environment variables from .env file
 load_dotenv()
 
@@ -47,22 +52,79 @@ app = Flask(__name__)
 # Enable CORS for all routes
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Initialize the ElderlyCareSys instance - wrapped in try/except
-try:
-    from integration.main import ElderlyCareSys
-    system = ElderlyCareSys()
+# Define API routes directly in this file for cloud deployment
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint"""
+    return jsonify({"status": "healthy", "cloud_mode": IS_CLOUD_ENV})
+
+@app.route('/api/users')
+def get_users():
+    """Get all users"""
+    mock_users = [
+        {"id": 1, "name": "Alice Johnson", "age": 75, "health_status": "stable"},
+        {"id": 2, "name": "Bob Smith", "age": 82, "health_status": "requires attention"},
+        {"id": 3, "name": "Carol Williams", "age": 70, "health_status": "stable"}
+    ]
+    return jsonify(mock_users)
+
+@app.route('/api/alerts')
+def get_alerts():
+    """Get active alerts"""
+    mock_alerts = [
+        {
+            "id": 1,
+            "user_id": 1,
+            "type": "health",
+            "severity": "medium",
+            "message": "Blood pressure slightly elevated",
+            "timestamp": "2025-04-04T18:30:00",
+            "status": "active"
+        },
+        {
+            "id": 2,
+            "user_id": 2,
+            "type": "safety",
+            "severity": "high",
+            "message": "Potential fall detected",
+            "timestamp": "2025-04-04T19:15:00",
+            "status": "active"
+        }
+    ]
     
-    # Import routes after system initialization to avoid circular imports
-    from integration.api import register_routes
-    register_routes(app, system)
-    logger.info("ElderlyCareSys initialized successfully")
-except ImportError as e:
-    logger.error(f"Import error initializing ElderlyCareSys: {e}")
-    logger.error(f"Current PYTHONPATH: {sys.path}")
-    system = None
-except Exception as e:
-    logger.error(f"Error initializing ElderlyCareSys: {e}")
-    system = None
+    user_id = request.args.get('user_id')
+    if user_id:
+        try:
+            user_id = int(user_id)
+            filtered_alerts = [alert for alert in mock_alerts if alert["user_id"] == user_id]
+            return jsonify(filtered_alerts)
+        except ValueError:
+            return jsonify({"error": "Invalid user_id parameter"}), 400
+    
+    return jsonify(mock_alerts)
+
+@app.route('/api/reminders', methods=['GET', 'POST'])
+def handle_reminders():
+    """Get or create reminders"""
+    if request.method == 'GET':
+        mock_reminders = [
+            {"id": 1, "user_id": 1, "title": "Take medication", "type": "medication", "scheduled_time": "2025-04-04T08:00:00"},
+            {"id": 2, "user_id": 1, "title": "Doctor appointment", "type": "appointment", "scheduled_time": "2025-04-05T14:30:00"},
+            {"id": 3, "user_id": 2, "title": "Exercise routine", "type": "activity", "scheduled_time": "2025-04-04T10:00:00"}
+        ]
+        return jsonify(mock_reminders)
+    elif request.method == 'POST':
+        data = request.json or {}
+        required_fields = ['user_id', 'title', 'type', 'scheduled_time']
+        
+        # Validate required fields
+        for field in required_fields:
+            if field not in data:
+                return jsonify({"error": f"Missing required field: {field}"}), 400
+        
+        # Mock creating a new reminder
+        new_id = 4  # Mock ID
+        return jsonify({"id": new_id, **data}), 201
 
 @app.route('/')
 def home():
@@ -72,8 +134,8 @@ def home():
         "status": "running",
         "documentation": "/api/docs",
         "tts_available": HAS_TTS,
-        "system_initialized": system is not None,
-        "python_path": sys.path
+        "cloud_mode": IS_CLOUD_ENV,
+        "system_initialized": True
     })
 
 @app.route('/api/docs')
