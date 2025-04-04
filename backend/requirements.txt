@@ -13,4 +13,10 @@ pyjwt==2.8.0
 pydantic==2.6.1
 pytest==7.4.3
 python-dateutil==2.8.2
-requests==2.31.0 
+requests==2.31.0
+
+# TTS support - will use alternatives in cloud environments
+gtts==2.5.1
+
+# Optional TTS support, won't fail if not available
+pyttsx3==2.90; sys_platform != 'linux' 

@@ -13,6 +13,11 @@ import time
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Global flag for cloud environment detection
+IS_CLOUD_ENV = os.environ.get('RENDER', False) or os.environ.get('CLOUD_ENV', False)
+if IS_CLOUD_ENV:
+    logger.info("Detected cloud environment, will use web-based TTS only")
+
 class VoiceReminderService:
     """
     A cross-platform voice reminder service that supports multiple text-to-speech engines.
@@ -43,7 +48,7 @@ class VoiceReminderService:
             'volume': self.config.get('volume', 1.0),  # Volume level (0.0 to 1.0)
             'voice': self.config.get('voice', None),  # Default voice
             'save_audio': self.config.get('save_audio', True),  # Save audio files for web playback
-            'play_audio': self.config.get('play_audio', True),  # Play audio immediately
+            'play_audio': not IS_CLOUD_ENV and self.config.get('play_audio', True),  # Play audio immediately (not in cloud)
             'language': self.config.get('language', 'en-US'),  # Default language
             'gender': self.config.get('gender', None)  # Voice gender preference
         }
@@ -56,15 +61,22 @@ class VoiceReminderService:
         self.available_engines = self._discover_available_engines()
         logger.info(f"Available TTS engines: {', '.join(self.available_engines)}")
         
-        # Initialize the best available engine
-        self._initialize_tts_engine()
+        # Force web engine in cloud environments
+        if IS_CLOUD_ENV:
+            logger.info("Using web-based TTS for cloud environment")
+            self.tts_engine = 'web'
+        else:
+            # Initialize the best available engine
+            self._initialize_tts_engine()
         
         # Start processing thread
         self._start_processing_thread()
         
     def _detect_platform(self):
         """Detect the current platform."""
-        if sys.platform.startswith('win'):
+        if IS_CLOUD_ENV:
+            return 'cloud'
+        elif sys.platform.startswith('win'):
             return 'windows'
         elif sys.platform.startswith('linux'):
             return 'linux'

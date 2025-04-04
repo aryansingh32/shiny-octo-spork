@@ -4,12 +4,19 @@ import argparse
 import logging
 import json
 from datetime import datetime
-import pyttsx3
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from integration.main import ElderlyCareSys
 from integration.api import app as flask_app
+
+# Conditionally import pyttsx3
+try:
+    import pyttsx3
+    HAS_TTS = True
+except ImportError:
+    HAS_TTS = False
+    print("Warning: pyttsx3 not available. Text-to-speech functionality will be disabled.")
 
 # Load environment variables from .env file
 load_dotenv()
@@ -53,7 +60,8 @@ def home():
         "name": "ElderlyCareUI API",
         "version": "1.0.0",
         "status": "running",
-        "documentation": "/api/docs"
+        "documentation": "/api/docs",
+        "tts_available": HAS_TTS
     })
 
 @app.route('/api/docs')
