@@ -21,9 +21,12 @@ except ImportError:
 # Load environment variables from .env file
 load_dotenv()
 
-# Setup logging with rotation
+# Setup logging with rotation - ensure directory exists
 log_dir = os.path.join(os.path.dirname(__file__), 'logs')
 os.makedirs(log_dir, exist_ok=True)
+
+# Make sure other required directories exist
+os.makedirs(os.path.join(os.path.dirname(__file__), 'audio_files'), exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
@@ -50,8 +53,10 @@ try:
     # Import routes after system initialization to avoid circular imports
     from integration.api import register_routes
     register_routes(app, system)
+    logger.info("ElderlyCareSys initialized successfully")
 except Exception as e:
     logger.error(f"Error initializing ElderlyCareSys: {e}")
+    system = None
     # Continue without the system for routes that don't require it
 
 @app.route('/')
@@ -61,7 +66,8 @@ def home():
         "version": "1.0.0",
         "status": "running",
         "documentation": "/api/docs",
-        "tts_available": HAS_TTS
+        "tts_available": HAS_TTS,
+        "system_initialized": system is not None
     })
 
 @app.route('/api/docs')
@@ -74,7 +80,7 @@ def api_docs():
             {"path": "/api/alerts", "methods": ["GET"], "description": "Get active alerts"},
             {"path": "/api/reminders", "methods": ["GET", "POST"], "description": "Get all reminders or add a new one"}
         ],
-        "github": "https://github.com/yourusername/ElderlyCareUI"
+        "github": "https://github.com/aryansingh32/shiny-octo-spork"
     })
 
 def run_api(host='0.0.0.0', port=5000, debug=False):
