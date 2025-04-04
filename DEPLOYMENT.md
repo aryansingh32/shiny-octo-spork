@@ -26,6 +26,8 @@ This guide describes how to deploy the ElderlyCareUI project to free hosting pla
 
 ## Step 2: Deploy the Backend to Render.com
 
+### Option 1: Deploy using Render Dashboard UI
+
 1. Sign up/login to [Render.com](https://render.com)
 2. Click "New Web Service"
 3. Connect your GitHub repository
@@ -34,13 +36,46 @@ This guide describes how to deploy the ElderlyCareUI project to free hosting pla
    - **Environment**: Python
    - **Region**: Choose the closest to your target users
    - **Branch**: main
-   - **Build Command**: `pip install -r backend/requirements.txt`
+   - **Build Command**: `pip install -r backend/requirements.txt && chmod +x build_render.sh && ./build_render.sh`
    - **Start Command**: `cd backend && gunicorn app:app`
    - **Plan**: Free
 
 5. Click "Create Web Service"
 6. Wait for the deployment to complete (this may take a few minutes)
 7. Once deployed, note the URL (typically `https://your-service-name.onrender.com`)
+
+### Option 2: Deploy using render.yaml (Blueprint)
+
+1. Sign up/login to [Render.com](https://render.com)
+2. Go to "Blueprints" section 
+3. Click "New Blueprint Instance"
+4. Connect your GitHub repository
+5. Render will automatically detect the `render.yaml` file and create the services defined in it
+6. Review the configuration and click "Apply"
+7. Wait for the deployment to complete
+8. Once deployed, note the URL for your backend service
+
+### Troubleshooting Render Deployment
+
+If you encounter issues with the deployment on Render:
+
+1. **Build Failures**:
+   - Check the build logs in the Render dashboard
+   - Make sure your Python dependencies are compatible with the Python version
+   - The `build_render.sh` script should help handle pyttsx3 issues
+
+2. **Runtime Errors**:
+   - Check if the application is starting by looking at the logs
+   - Verify environment variables are set correctly
+   - Check the Health Check is passing
+
+3. **Voice Reminder Service Issues**:
+   - The application automatically detects cloud environments and disables pyttsx3
+   - Text-to-speech functionality will be limited, but APIs will continue to work
+
+4. **Database Issues**:
+   - The default SQLite database may reset on Render free tier when the instance sleeps
+   - Consider upgrading to a persistent database service for production
 
 ## Step 3: Update Frontend Configuration
 
@@ -89,6 +124,13 @@ After deploying the backend, you need to update the frontend configuration:
    - Check Render logs for backend problems
    - Check Vercel logs for frontend problems
 
+## Keeping Your Application Running
+
+The free tier of Render will spin down your service after 15 minutes of inactivity:
+
+1. **Avoid Spin Down**: Set up a free uptime monitoring service like UptimeRobot to ping your backend URL every 5-10 minutes
+2. **Restart on Error**: Render automatically restarts your service if it crashes
+
 ## Updating Your Application
 
 When you make changes to your code:
@@ -110,11 +152,4 @@ Both Render and Vercel allow you to set up custom domains:
 - For Render: Go to your service > Settings > Custom Domain
 - For Vercel: Go to your project > Settings > Domains
 
-Note that SSL certificates are provided automatically by both services.
-
-## Troubleshooting
-
-- **Backend not responding**: Check Render logs for errors
-- **Frontend not updating**: Make sure the Vercel build is completing successfully
-- **CORS errors**: Ensure CORS is properly configured in backend/app.py
-- **Environment variable issues**: Verify variables are set correctly in both platforms 
+Note that SSL certificates are provided automatically by both services. 
