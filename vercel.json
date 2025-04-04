@@ -1,6 +1,6 @@
 {
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
+  "buildCommand": "chmod +x vercel-build.sh && ./vercel-build.sh",
+  "installCommand": "echo 'Skipping default install'",
   "outputDirectory": "dist",
   "framework": "vite",
   "routes": [
@@ -9,6 +9,7 @@
     { "src": "/(.*)", "dest": "index.html" }
   ],
   "env": {
-    "VITE_API_BASE_URL": "https://elderlycare.onrender.com"
+    "VITE_API_BASE_URL": "https://elderlycare.onrender.com",
+    "VERCEL_SKIP_DEFAULT_INSTALL": "1"
   }
 } 
