@@ -7,8 +7,12 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from integration.main import ElderlyCareSys
-from integration.api import app as flask_app
+
+# Configure paths to handle both direct and imported execution
+current_dir = os.path.dirname(os.path.abspath(__file__))
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+    sys.path.append(os.path.dirname(current_dir))  # Add parent directory
 
 # Conditionally import pyttsx3
 try:
@@ -37,27 +41,28 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Add the project directory to the path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
 # Initialize the Flask application
 app = Flask(__name__)
 
 # Enable CORS for all routes
 CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-# Initialize the ElderlyCareSys instance
+# Initialize the ElderlyCareSys instance - wrapped in try/except
 try:
+    from integration.main import ElderlyCareSys
     system = ElderlyCareSys()
     
     # Import routes after system initialization to avoid circular imports
     from integration.api import register_routes
     register_routes(app, system)
     logger.info("ElderlyCareSys initialized successfully")
+except ImportError as e:
+    logger.error(f"Import error initializing ElderlyCareSys: {e}")
+    logger.error(f"Current PYTHONPATH: {sys.path}")
+    system = None
 except Exception as e:
     logger.error(f"Error initializing ElderlyCareSys: {e}")
     system = None
-    # Continue without the system for routes that don't require it
 
 @app.route('/')
 def home():
@@ -67,7 +72,8 @@ def home():
         "status": "running",
         "documentation": "/api/docs",
         "tts_available": HAS_TTS,
-        "system_initialized": system is not None
+        "system_initialized": system is not None,
+        "python_path": sys.path
     })
 
 @app.route('/api/docs')
