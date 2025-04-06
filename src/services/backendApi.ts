@@ -212,9 +212,9 @@ export async function getLatestHealthData(userId: string): Promise<Record<string
 export async function submitHealthData(userId: string, data: any): Promise<{ success: boolean, results?: any }> {
   try {
     const response = await fetchWithAuth<{ success: boolean, message: string, results?: any }>(`/api/users/${userId}/health-data`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    method: "POST",
+    body: JSON.stringify(data),
+  });
     
     console.log("Health data submission response:", response);
     return {
@@ -235,9 +235,9 @@ export async function getSafetyAlerts(): Promise<SafetyAlert[]> {
 export async function submitSafetyData(userId: string, data: any): Promise<{ success: boolean, results?: any }> {
   try {
     const response = await fetchWithAuth<{ success: boolean, message: string, results?: any }>(`/api/users/${userId}/safety-data`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
+    method: "POST",
+    body: JSON.stringify(data),
+  });
     
     console.log("Safety data submission response:", response);
     return {

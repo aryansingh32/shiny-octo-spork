@@ -257,6 +257,14 @@ class Database:
                 glucose_level REAL,
                 additional_metrics TEXT,
                 is_abnormal BOOLEAN DEFAULT 0,
+                Heart_Rate_normalized REAL,
+                Systolic_normalized REAL,
+                Diastolic_normalized REAL,
+                Glucose_Levels_normalized REAL,
+                SpO2_normalized REAL,
+                Hour INTEGER,
+                Day INTEGER,
+                Is_Night BOOLEAN,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
             ''')
@@ -274,6 +282,15 @@ class Database:
                 time_inactive INTEGER,
                 risk_level TEXT,
                 additional_data TEXT,
+                Location_Bathroom_normalized REAL,
+                Location_Bedroom_normalized REAL,
+                Location_Kitchen_normalized REAL,
+                Location_LivingRoom_normalized REAL,
+                Movement_Lying_normalized REAL,
+                Movement_Sitting_normalized REAL,
+                Movement_Standing_normalized REAL,
+                Movement_Walking_normalized REAL,
+                Inactivity_Duration_normalized REAL,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
             ''')
@@ -1468,3 +1485,21 @@ class Database:
         except Exception as e:
             logger.error(f"Unexpected error adding alert for user {user_id}: {e}")
             raise
+
+    def get_sample_health_data(self):
+        """
+        Get a sample of health data from the database.
+
+        Returns:
+            list: A list of health data records.
+        """
+        try:
+            cursor = self.conn.cursor()
+            cursor.execute("SELECT * FROM health_data LIMIT 10")
+            health_data = []
+            for row in cursor.fetchall():
+                health_data.append(dict(row))
+            return health_data
+        except sqlite3.Error as e:
+            logger.error(f"Error retrieving sample health data: {e}")
+            return []

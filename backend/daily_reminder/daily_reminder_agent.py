@@ -48,9 +48,10 @@ class DailyReminderAgent:
         """Load pre-trained models if they exist"""
         try:
             # Define model file paths
-            acknowledgment_model_path = 'models/acknowledgment_model.pkl'
-            priority_model_path = 'models/priority_model.pkl'
-            optimal_time_model_path = 'models/optimal_time_model.pkl'
+            base_dir = os.path.dirname(__file__)
+            acknowledgment_model_path = os.path.join(base_dir, 'models', 'acknowledgment_model.pkl')
+            priority_model_path = os.path.join(base_dir, 'models', 'priority_model.pkl')
+            optimal_time_model_path = os.path.join(base_dir, 'models', 'optimal_time_model.pkl')
             
             # Check if acknowledgment model exists and load it
             if os.path.exists(acknowledgment_model_path):

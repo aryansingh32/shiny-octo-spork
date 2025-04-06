@@ -59,7 +59,7 @@ class ElderlyCareSys:
         try:
             # Load configuration if provided
             self.config = self._load_config(config_path)
-            
+        
             # Initialize database with proper error handling
             db_path = db_path or os.getenv("DATABASE_PATH", "elderly_care.db")
             self.db = Database(db_path=db_path)
@@ -677,16 +677,12 @@ class ElderlyCareSys:
             if not user:
                 self.logger.error(f"User {user_id} not found")
                 return {"error": "User not found"}
-            
-            age = user.get('age', 70)  # Default to elderly age if not specified
-            user_sex = user.get('sex', 'unknown')  # Get sex for appropriate thresholds
                 
             results = {
                 "anomalies_detected": False,
                 "issues": [],
                 "actions_taken": [],
-                "metrics": {},
-                "status_summary": {}
+                "metrics": {}
             }
             
             # Check if data contains anomalies
@@ -697,282 +693,71 @@ class ElderlyCareSys:
             oxygen_saturation = data.get('oxygen_saturation')
             glucose_level = data.get('glucose_level')
             
-            # Store metrics for the result with status
-            metrics_status = {}
-            
-            # Heart Rate thresholds - adjusted for elderly (more lenient)
+            # Store metrics for the result
             if heart_rate is not None:
                 results["metrics"]["heart_rate"] = f"{heart_rate} BPM"
-                
-                if heart_rate < 40:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Critically low heart rate: {heart_rate} BPM",
-                        "severity": "high"
-                    })
-                elif heart_rate < 50:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Low heart rate: {heart_rate} BPM",
-                        "severity": "medium"
-                    })
-                elif heart_rate > 120:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Critically elevated heart rate: {heart_rate} BPM",
-                        "severity": "high"
-                    })
-                elif heart_rate > 100:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Elevated heart rate: {heart_rate} BPM",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["heart_rate"] = status
-            
-            # Temperature thresholds (Celsius)
             if temperature is not None:
                 results["metrics"]["temperature"] = f"{temperature}°C"
-                
-                if temperature < 35.0:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypothermia detected: {temperature}°C",
-                        "severity": "high"
-                    })
-                elif temperature < 36.0:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Below normal temperature: {temperature}°C",
-                        "severity": "medium"
-                    })
-                elif temperature > 39.0:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"High fever detected: {temperature}°C",
-                        "severity": "high"
-                    })
-                elif temperature > 37.8:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Fever detected: {temperature}°C",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["temperature"] = status
-                
-            # Oxygen saturation thresholds
             if oxygen_saturation is not None:
                 results["metrics"]["oxygen_saturation"] = f"{oxygen_saturation}%"
-                
-                if oxygen_saturation < 88:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Severe hypoxemia detected: {oxygen_saturation}%",
-                        "severity": "high"
-                    })
-                elif oxygen_saturation < 92:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Mild hypoxemia detected: {oxygen_saturation}%",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["oxygen_saturation"] = status
-                
-            # Blood pressure thresholds
             if blood_pressure_systolic is not None and blood_pressure_diastolic is not None:
                 results["metrics"]["blood_pressure"] = f"{blood_pressure_systolic}/{blood_pressure_diastolic} mmHg"
-                
-                # Determine overall BP status (worst of systolic/diastolic)
-                systolic_status = "normal"
-                diastolic_status = "normal"
-                
-                # Systolic BP evaluation
-                if blood_pressure_systolic < 90:
-                    systolic_status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypotension detected: Systolic BP {blood_pressure_systolic} mmHg",
-                        "severity": "high"
-                    })
-                elif blood_pressure_systolic < 100:
-                    systolic_status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Low systolic BP: {blood_pressure_systolic} mmHg",
-                        "severity": "medium"
-                    })
-                elif blood_pressure_systolic >= 180:
-                    systolic_status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertensive crisis: Systolic BP {blood_pressure_systolic} mmHg",
-                        "severity": "high"
-                    })
-                elif blood_pressure_systolic >= 140:
-                    systolic_status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertension detected: Systolic BP {blood_pressure_systolic} mmHg",
-                        "severity": "medium"
-                    })
-                
-                # Diastolic BP evaluation
-                if blood_pressure_diastolic < 60:
-                    diastolic_status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Low diastolic BP: {blood_pressure_diastolic} mmHg",
-                        "severity": "medium"
-                    })
-                elif blood_pressure_diastolic >= 120:
-                    diastolic_status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertensive crisis: Diastolic BP {blood_pressure_diastolic} mmHg",
-                        "severity": "high"
-                    })
-                elif blood_pressure_diastolic >= 90:
-                    diastolic_status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertension detected: Diastolic BP {blood_pressure_diastolic} mmHg",
-                        "severity": "medium"
-                    })
-                
-                # Overall BP status is the more severe of the two
-                if systolic_status == "critical" or diastolic_status == "critical":
-                    status = "critical"
-                elif systolic_status == "moderate" or diastolic_status == "moderate":
-                    status = "moderate"
-                else:
-                    status = "normal"
-                    
-                metrics_status["blood_pressure"] = status
-                
             elif blood_pressure_systolic is not None:
                 results["metrics"]["blood_pressure_systolic"] = f"{blood_pressure_systolic} mmHg"
-                
-                if blood_pressure_systolic < 90:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypotension detected: Systolic BP {blood_pressure_systolic} mmHg",
-                        "severity": "high"
-                    })
-                elif blood_pressure_systolic < 100:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Low systolic BP: {blood_pressure_systolic} mmHg",
-                        "severity": "medium"
-                    })
-                elif blood_pressure_systolic >= 180:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertensive crisis: Systolic BP {blood_pressure_systolic} mmHg",
-                        "severity": "high"
-                    })
-                elif blood_pressure_systolic >= 140:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertension detected: Systolic BP {blood_pressure_systolic} mmHg",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["blood_pressure_systolic"] = status
-                
             elif blood_pressure_diastolic is not None:
                 results["metrics"]["blood_pressure_diastolic"] = f"{blood_pressure_diastolic} mmHg"
-                
-                if blood_pressure_diastolic < 60:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Low diastolic BP: {blood_pressure_diastolic} mmHg",
-                        "severity": "medium"
-                    })
-                elif blood_pressure_diastolic >= 120:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertensive crisis: Diastolic BP {blood_pressure_diastolic} mmHg",
-                        "severity": "high"
-                    })
-                elif blood_pressure_diastolic >= 90:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypertension detected: Diastolic BP {blood_pressure_diastolic} mmHg",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["blood_pressure_diastolic"] = status
-                
-            # Glucose level thresholds (mg/dL)
             if glucose_level is not None:
                 results["metrics"]["glucose_level"] = f"{glucose_level} mg/dL"
-                
-                if glucose_level < 70:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hypoglycemia detected: Glucose {glucose_level} mg/dL",
-                        "severity": "medium"
-                    })
-                elif glucose_level < 55:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Severe hypoglycemia detected: Glucose {glucose_level} mg/dL",
-                        "severity": "high"
-                    })
-                elif glucose_level > 300:
-                    status = "critical"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Severe hyperglycemia detected: Glucose {glucose_level} mg/dL",
-                        "severity": "high"
-                    })
-                elif glucose_level > 180:
-                    status = "moderate"
-                    results["anomalies_detected"] = True
-                    results["issues"].append({
-                        "message": f"Hyperglycemia detected: Glucose {glucose_level} mg/dL",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["glucose_level"] = status
-                
-            # Add status summary to results
-            results["status_summary"] = metrics_status
             
+            # Health checks
+            if heart_rate is not None:
+                if heart_rate < 40 or heart_rate > 180:
+                    results["anomalies_detected"] = True
+                    results["issues"].append({
+                        "message": f"Abnormal heart rate detected: {heart_rate} BPM",
+                        "severity": "high" if (heart_rate < 30 or heart_rate > 200) else "medium"
+                    })
+                    
+            if temperature is not None:
+                if temperature < 35 or temperature > 39:
+                    results["anomalies_detected"] = True
+                    results["issues"].append({
+                        "message": f"Abnormal temperature detected: {temperature}°C",
+                        "severity": "high" if (temperature < 34 or temperature > 40) else "medium"
+                    })
+                    
+            if oxygen_saturation is not None:
+                if oxygen_saturation < 92:
+                    results["anomalies_detected"] = True
+                    results["issues"].append({
+                        "message": f"Low oxygen level detected: {oxygen_saturation}%",
+                        "severity": "high" if oxygen_saturation < 88 else "medium"
+                    })
+                    
+            if blood_pressure_systolic is not None:
+                if blood_pressure_systolic < 90 or blood_pressure_systolic > 180:
+                    results["anomalies_detected"] = True
+                    results["issues"].append({
+                        "message": f"Abnormal systolic blood pressure: {blood_pressure_systolic} mmHg",
+                        "severity": "high" if (blood_pressure_systolic < 80 or blood_pressure_systolic > 200) else "medium"
+                    })
+                    
+            if blood_pressure_diastolic is not None:
+                if blood_pressure_diastolic < 60 or blood_pressure_diastolic > 120:
+                    results["anomalies_detected"] = True
+                    results["issues"].append({
+                        "message": f"Abnormal diastolic blood pressure: {blood_pressure_diastolic} mmHg",
+                        "severity": "high" if (blood_pressure_diastolic < 50 or blood_pressure_diastolic > 130) else "medium"
+                    })
+                    
+            if glucose_level is not None:
+                if glucose_level < 70 or glucose_level > 200:
+                    results["anomalies_detected"] = True
+                    results["issues"].append({
+                        "message": f"Abnormal glucose level: {glucose_level} mg/dL",
+                        "severity": "high" if (glucose_level < 55 or glucose_level > 300) else "medium"
+                    })
+                    
             # If the user has the health monitoring agent, use it
             if hasattr(self.agent_coordinator, 'health_monitoring_agent'):
                 agent = self.agent_coordinator.health_monitoring_agent
@@ -1001,18 +786,24 @@ class ElderlyCareSys:
             # If anomalies were detected, create an alert
             if results["anomalies_detected"]:
                 alert_messages = []
-                alert_severity = "info"
                 
-                # Extract alerts from issues, determining the highest severity
+                # Extract alerts from issues
                 for issue in results["issues"]:
                     if isinstance(issue, dict) and "message" in issue:
                         alert_messages.append(issue["message"])
-                        if issue.get("severity") == "high":
-                            alert_severity = "critical"
-                        elif issue.get("severity") == "medium" and alert_severity == "info":
-                            alert_severity = "warning"
                     elif isinstance(issue, str):
                         alert_messages.append(issue)
+                
+                # If no alert messages were found, use the old method
+                if not alert_messages:
+                    if heart_rate and (heart_rate < 40 or heart_rate > 180):
+                        alert_messages.append(f"Abnormal heart rate: {heart_rate} BPM")
+                        
+                    if temperature and (temperature < 35 or temperature > 39):
+                        alert_messages.append(f"Abnormal temperature: {temperature}°C")
+                        
+                    if oxygen_saturation and oxygen_saturation < 92:
+                        alert_messages.append(f"Low oxygen level: {oxygen_saturation}%")
                 
                 # Create alert message
                 alert_message = "Health anomaly detected: " + ", ".join(alert_messages)
@@ -1021,7 +812,7 @@ class ElderlyCareSys:
                 self.db.add_alert(
                     user_id=user_id,
                     message=alert_message,
-                    severity=alert_severity,
+                    severity="warning",
                     source_agent="health_monitoring_agent",
                     additional_data=json.dumps(data)
                 )
@@ -1032,41 +823,10 @@ class ElderlyCareSys:
             # Add recommendations if anomalies detected
             if results["anomalies_detected"]:
                 results["recommendations"] = [
-                    "Contact healthcare provider immediately for any critical values",
-                    "Monitor and document symptoms associated with abnormal readings",
-                    "Ensure proper medication adherence and timing",
-                    "Maintain adequate hydration and follow dietary guidelines",
-                    "Verify measurement devices are calibrated and working properly"
+                    "Contact healthcare provider if symptoms persist",
+                    "Ensure monitoring devices are properly calibrated",
+                    "Follow prescribed medication regimen"
                 ]
-                
-                # Add specific recommendations based on detected issues
-                has_blood_pressure_issue = any("blood pressure" in issue["message"].lower() 
-                                               for issue in results["issues"] 
-                                               if isinstance(issue, dict) and "message" in issue)
-                
-                has_glucose_issue = any("glucose" in issue["message"].lower() 
-                                        for issue in results["issues"] 
-                                        if isinstance(issue, dict) and "message" in issue)
-                
-                if has_blood_pressure_issue:
-                    results["recommendations"].append("Limit sodium intake and follow DASH diet principles")
-                    
-                if has_glucose_issue:
-                    results["recommendations"].append("Monitor carbohydrate intake and follow prescribed diabetes management plan")
-            
-            # Add overall health status assessment
-            if results["anomalies_detected"]:
-                # Determine overall severity
-                has_critical = any(issue.get("severity") == "high" 
-                                  for issue in results["issues"] 
-                                  if isinstance(issue, dict) and "severity" in issue)
-                
-                if has_critical:
-                    results["overall_status"] = "critical"
-                else:
-                    results["overall_status"] = "moderate"
-            else:
-                results["overall_status"] = "normal"
             
             # Log the processing complete
             self.logger.info(f"Completed processing health data for user {user_id}")
@@ -1102,8 +862,7 @@ class ElderlyCareSys:
                 "issues_detected": False,
                 "issues": [],
                 "actions_taken": [],
-                "metrics": {},
-                "status_summary": {}
+                "metrics": {}
             }
             
             # Extract safety metrics
@@ -1115,132 +874,40 @@ class ElderlyCareSys:
             risk_level = data.get('risk_level')
             
             # Store metrics for the result
-            metrics_status = {}
-            
-            # Location assessment
             if location:
                 results["metrics"]["location"] = location
-                metrics_status["location"] = "normal"
-                
-                # Check if bathroom location with extended inactivity
-                if location.lower() == 'bathroom' and time_inactive and time_inactive > 60:
-                    metrics_status["location"] = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"Extended bathroom stay detected: {time_inactive} minutes",
-                        "severity": "medium"
-                    })
-            
-            # Movement type assessment
             if movement_type:
                 results["metrics"]["movement_type"] = movement_type
-                
-                if movement_type.lower() == 'unknown':
-                    status = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": "Movement could not be determined",
-                        "severity": "medium"
-                    })
-                elif movement_type.lower() == 'lying_down' and location and location.lower() not in ['bedroom', 'living_room']:
-                    status = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"User lying down in {location}",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["movement_type"] = status
-            
-            # Activity level assessment
             if activity_level:
                 results["metrics"]["activity_level"] = activity_level
-                
-                if activity_level.lower() == 'none':
-                    status = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": "No activity detected",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["activity_level"] = status
-            
-            # Fall detection (critical safety issue)
-            if fall_detected is not None:
-                results["metrics"]["fall_detected"] = "Yes" if fall_detected else "No"
-                
-                if fall_detected:
-                    status = "critical"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": "Fall detected - immediate assistance required",
-                        "severity": "high"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["fall_detected"] = status
-            
-            # Inactivity assessment
             if time_inactive is not None:
                 results["metrics"]["time_inactive"] = f"{time_inactive} minutes"
-                
-                if time_inactive > 480:  # 8 hours
-                    status = "critical"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"Critical inactivity detected: {time_inactive} minutes without movement",
-                        "severity": "high"
-                    })
-                elif time_inactive > 240:  # 4 hours
-                    status = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"Extended inactivity detected: {time_inactive} minutes",
-                        "severity": "medium"
-                    })
-                elif time_inactive > 120 and (activity_level and activity_level.lower() == 'none'):
-                    status = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"Inactivity with no movement: {time_inactive} minutes",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["time_inactive"] = status
-            
-            # Risk level assessment
+            if fall_detected is not None:
+                results["metrics"]["fall_detected"] = "Yes" if fall_detected else "No"
             if risk_level:
                 results["metrics"]["risk_level"] = risk_level
+            
+            # Safety checks
+            if fall_detected:
+                results["issues_detected"] = True
+                results["issues"].append({
+                    "message": "Fall detected",
+                    "severity": "high"
+                })
                 
-                if risk_level.lower() == 'high':
-                    status = "critical"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"High safety risk detected",
-                        "severity": "high"
-                    })
-                elif risk_level.lower() == 'medium':
-                    status = "moderate"
-                    results["issues_detected"] = True
-                    results["issues"].append({
-                        "message": f"Medium safety risk detected",
-                        "severity": "medium"
-                    })
-                else:
-                    status = "normal"
-                    
-                metrics_status["risk_level"] = status
+            if risk_level and risk_level.lower() == 'high':
+                results["issues_detected"] = True
+                results["issues"].append({
+                    "message": f"High safety risk detected: {risk_level}",
+                    "severity": "high"
+                })
                 
-            # Add status summary to results
-            results["status_summary"] = metrics_status
+            if time_inactive and time_inactive > 240:  # 4 hours inactive
+                results["issues_detected"] = True
+                results["issues"].append({
+                    "message": f"Extended inactivity detected: {time_inactive} minutes",
+                    "severity": "medium"
+                })
                 
             # If the user has the safety monitoring agent, use it
             if hasattr(self.agent_coordinator, 'safety_monitoring_agent'):
@@ -1270,66 +937,56 @@ class ElderlyCareSys:
             # If issues were detected, create an alert
             if results["issues_detected"]:
                 alert_messages = []
-                alert_severity = "info"
+                severity = "info"
                 
-                # Extract alerts from issues, determining the highest severity
+                # Extract alerts from issues
                 for issue in results["issues"]:
                     if isinstance(issue, dict) and "message" in issue:
                         alert_messages.append(issue["message"])
                         if issue.get("severity") == "high":
-                            alert_severity = "critical"
-                        elif issue.get("severity") == "medium" and alert_severity == "info":
-                            alert_severity = "warning"
+                            severity = "critical"
+                        elif issue.get("severity") == "medium" and severity != "critical":
+                            severity = "warning"
                     elif isinstance(issue, str):
                         alert_messages.append(issue)
                 
+                # If no alert messages were found, use the old method
+                if not alert_messages:
+                    if fall_detected:
+                        alert_messages.append("Fall detected")
+                        severity = "critical"
+                        
+                    if risk_level and risk_level.lower() == 'high':
+                        alert_messages.append(f"High safety risk: {risk_level}")
+                        if severity != "critical":
+                            severity = "warning"
+                            
+                    if time_inactive and time_inactive > 240:
+                        alert_messages.append(f"Extended inactivity: {time_inactive} minutes")
+                        if severity != "critical":
+                            severity = "warning"
+                
                 # Create alert message
                 alert_message = "Safety issue detected: " + ", ".join(alert_messages)
+                
+                # Add recommendations if issues detected
+                results["recommendations"] = [
+                    "Check on the user immediately if fall detected",
+                    "Maintain clear pathways and adequate lighting",
+                    "Regularly review safety measures in the environment"
+                ]
                 
                 # Add alert to database
                 self.db.add_alert(
                     user_id=user_id,
                     message=alert_message,
-                    severity=alert_severity,
+                    severity=severity,
                     source_agent="safety_monitoring_agent",
                     additional_data=json.dumps(data)
                 )
                 
                 results["actions_taken"].append("Created safety alert for detected issues")
                 self.logger.warning(f"Safety alert created for user {user_id}: {alert_message}")
-            
-            # Add recommendations based on detected issues
-            if results["issues_detected"]:
-                results["recommendations"] = [
-                    "Check on the user immediately for critical safety situations",
-                    "Maintain clear pathways and adequate lighting",
-                    "Ensure emergency call systems are operational and accessible",
-                    "Review fall prevention measures in the environment"
-                ]
-                
-                # Add specific recommendations based on detected issues
-                if fall_detected:
-                    results["recommendations"] = [
-                        "URGENT: Check on the user immediately - fall detected",
-                        "Assess for injuries and call emergency services if needed",
-                        "Do not move the person if severe injury is suspected",
-                        "Document the incident and review fall prevention measures"
-                    ]
-                elif time_inactive and time_inactive > 240:
-                    results["recommendations"].append("Schedule regular movement or position changes")
-                    results["recommendations"].append("Assess for potential mobility issues or discomfort")
-            
-            # Add overall safety status assessment
-            if results["issues_detected"]:
-                # Determine overall severity
-                has_critical = any(issue.get("severity") == "high" 
-                                  for issue in results["issues"] 
-                                  if isinstance(issue, dict) and "severity" in issue)
-                
-                if has_critical:
-                    results["overall_status"] = "critical"
-                else:
-                    results["overall_status"] = "moderate"
                 
             # Log the processing complete
             self.logger.info(f"Completed processing safety data for user {user_id}")
@@ -1370,7 +1027,7 @@ def main():
     finally:
         if system:
             system.close()
-        logger.info("Elderly Care Multi-Agent System stopped")
+            logger.info("Elderly Care Multi-Agent System stopped")
 
 if __name__ == "__main__":
     main()

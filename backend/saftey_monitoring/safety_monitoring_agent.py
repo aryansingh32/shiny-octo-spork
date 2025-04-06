@@ -33,11 +33,11 @@ class SafetyMonitoringAgent:
     def _load_models(self):
         """Load pre-trained models if they exist"""
         try:
-            # Define model file paths
-            isolation_forest_path = 'modelsSafety/safety_isolation_forest_model.pkl'
-            supervised_model_path = 'modelsSafety/safety_rf_classifier_model.pkl'
-            risk_level_model_path = 'modelsSafety/safety_risk_level_model.pkl'
-            
+            base_dir = os.path.dirname(__file__)  # Directory of the current file
+            isolation_forest_path = os.path.join(base_dir, 'modelsSafety', 'safety_isolation_forest_model.pkl')
+            supervised_model_path = os.path.join(base_dir, 'modelsSafety', 'safety_rf_classifier_model.pkl')
+            risk_level_model_path = os.path.join(base_dir, 'modelsSafety', 'safety_risk_level_model.pkl')
+
             # Check if isolation forest model exists and load it
             if os.path.exists(isolation_forest_path):
                 self.isolation_forest = joblib.load(isolation_forest_path)

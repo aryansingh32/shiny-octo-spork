@@ -17,6 +17,9 @@ os.makedirs('results', exist_ok=True)
 
 class HealthMonitoringAgent:
     def __init__(self, database):
+        # Initialize logger first
+        self.logger = logging.getLogger(__name__)
+        
         self.database = database
         self.isolation_forest = None
         self.supervised_model = None
@@ -31,40 +34,38 @@ class HealthMonitoringAgent:
         # Load pre-trained models if they exist
         self._load_models()
         
-        # Initialize logger
-        self.logger = logging.getLogger(__name__)
-        
     def _load_models(self):
-        """Load pre-trained models if they exist"""
+        """Load pre-trained models if they exist."""
         try:
-            # Define model file paths
-            isolation_forest_path = 'models/isolation_forest_model.pkl'
-            supervised_model_path = 'models/rf_classifier_model.pkl'
-            severity_model_path = 'models/severity_model.pkl'
-            
-            # Check if isolation forest model exists and load it
+            # Construct absolute paths for the models
+            base_dir = os.path.dirname(__file__)  # Directory of the current file
+            isolation_forest_path = os.path.join(base_dir, 'models', 'isolation_forest_model.pkl')
+            supervised_model_path = os.path.join(base_dir, 'models', 'rf_classifier_model.pkl')
+            severity_model_path = os.path.join(base_dir, 'models', 'severity_model.pkl')
+
+            # Load Isolation Forest model
             if os.path.exists(isolation_forest_path):
                 self.isolation_forest = joblib.load(isolation_forest_path)
-                print(f"Loaded Isolation Forest model from {isolation_forest_path}")
+                self.logger.info(f"Loaded Isolation Forest model from {isolation_forest_path}")
             else:
-                print(f"Isolation Forest model not found at {isolation_forest_path}, will train when data is provided")
-                
-            # Check if supervised model exists and load it
+                self.logger.warning(f"Isolation Forest model not found at {isolation_forest_path}")
+
+            # Load Supervised model
             if os.path.exists(supervised_model_path):
                 self.supervised_model = joblib.load(supervised_model_path)
-                print(f"Loaded Supervised model from {supervised_model_path}")
+                self.logger.info(f"Loaded Supervised model from {supervised_model_path}")
             else:
-                print(f"Supervised model not found at {supervised_model_path}, will train when data is provided")
-                
-            # Check if severity model exists and load it
+                self.logger.warning(f"Supervised model not found at {supervised_model_path}")
+
+            # Load Severity model
             if os.path.exists(severity_model_path):
                 self.severity_model = joblib.load(severity_model_path)
-                print(f"Loaded Severity model from {severity_model_path}")
+                self.logger.info(f"Loaded Severity model from {severity_model_path}")
             else:
-                print(f"Severity model not found at {severity_model_path}, will train when data is provided")
-                
+                self.logger.warning(f"Severity model not found at {severity_model_path}")
+
         except Exception as e:
-            print(f"Error loading pre-trained models: {e}")
+            self.logger.error(f"Error loading pre-trained models: {e}")
             
     def load_data(self, ml_data_path, cleaned_data_path=None):
         """Load and prepare the datasets for training and validation"""
@@ -697,13 +698,12 @@ class HealthMonitoringAgent:
             data['Is_Night'] = ((data['Hour'] >= 22) | (data['Hour'] <= 6)).astype(int)
             
         # Ensure we have all needed columns for prediction
-        missing_cols = [col for col in self.feature_columns if col not in data.columns]
-        
+        missing_cols = set(self.feature_columns) - set(data.columns)
         if missing_cols:
-            print(f"Missing columns for anomaly detection: {missing_cols}")
-            # Fill with zeros as a fallback
+            self.logger.warning(f"Missing columns for anomaly detection: {missing_cols}")
             for col in missing_cols:
-                data[col] = 0
+                data[col] = 0  # Fill missing columns with default values
+
             
         # Use isolation forest if available
         if self.isolation_forest is not None:
